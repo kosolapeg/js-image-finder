@@ -1,11 +1,9 @@
 {{#each this}}
 <li>
     <div class="photo-card">
-        <a href="{{largeImageURL}}" target="_blank">
-            <img src="{{webformatURL }}" alt="" loading="lazy" width="480" />
+       
+            <img src="{{webformatURL }}" alt="" loading="lazy" width="480" data-source="{{largeImageURL}}"/>
             <p>{{imageWidth}}x{{imageHeight}}px</p>
-
-        </a>
 
 
         <div class="stats">

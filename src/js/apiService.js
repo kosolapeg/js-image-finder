@@ -6,17 +6,15 @@ export default class ApiService {
   constructor() {
     this.searchQuery = '';
     this.page = 1;
-    this.perPage = 12;
+    this.perPage = 20;
   }
 
-  fetchImages() {
+  async fetchImages() {
     const url = `${BASE_URL}&key=${API_KEY}&q=${this.searchQuery}&per_page=${this.perPage}&page=${this.page}`;
-    return fetch(url)
-      .then(response => response.json())
-      .then(({ hits, totalHits }) => {
-        // console.log(totalHits, hits);
-        return { hits, totalHits };
-      });
+
+    const result = await fetch(url);
+
+    return result.json();
   }
 
   incrementPage() {

@@ -1,39 +1,68 @@
 import './css/bootstrap.min.css';
 import './css/common.css';
 import 'material-design-icons/iconfont/material-icons.css';
-import LoadMoreBtn from './js/components/loadMoreBtn';
+// import LoadMoreBtn from './js/components/loadMoreBtn';
+
 import ApiService from './js/apiService';
 import galleryTmplt from './tmplates/gallery.hbs';
 
+import * as basicLightbox from 'basiclightbox';
+import 'basiclightbox/dist/basicLightbox.min.css';
+
 const refs = {
+  // moreBtn: document.querySelector('[data-action="load-more"]'),
   searchForm: document.querySelector('#search-form'),
   gallery: document.querySelector('.gallery'),
   results: document.querySelector('.results'),
-  // moreBtn: document.querySelector('[data-action="load-more"]'),
   guardScroll: document.querySelector('.guard'),
 };
 
 const imagesApi = new ApiService();
 
-refs.searchForm.addEventListener('submit', onSearch);
+const onEnlarge = e => {
+  if (e.target.nodeName != 'IMG') return;
+  const imgSrc = e.target.dataset.source;
+  basicLightbox.create(`<img width="1200" src="${imgSrc}">`).show();
+};
 
-function onSearch(e) {
+refs.searchForm.addEventListener('submit', onSearch);
+refs.gallery.addEventListener('click', onEnlarge);
+
+console.log(refs.gallery);
+
+async function onSearch(e) {
   e.preventDefault();
   imagesApi.query = e.currentTarget.elements.query.value;
+  imagesApi.resetPage();
+  refs.gallery.innerHTML = '';
 
-  imagesApi.fetchImages().then(({ hits, totalHits }) => {
-    refs.results.innerHTML = `Results: ${totalHits}`;
-    refs.gallery.innerHTML = '';
+  const { hits, totalHits } = await imagesApi.fetchImages();
+  refs.results.innerHTML = `Results: ${totalHits}`;
 
-    appendImages(hits);
-
-    // totalHits > 12 ? loadMoreBtn.show() : loadMoreBtn.hide();
-  });
+  appendImages(hits);
+  imagesApi.incrementPage();
+  // totalHits > 12 ? loadMoreBtn.show() : loadMoreBtn.hide();
 }
 
 function appendImages(images) {
   refs.gallery.insertAdjacentHTML('beforeend', galleryTmplt(images));
 }
+
+// Load more with infinie scroll
+const onEntry = entries => {
+  entries.forEach(async entry => {
+    if (entry.isIntersecting && imagesApi.query != '') {
+      const { hits } = await imagesApi.fetchImages();
+      appendImages(hits);
+      imagesApi.incrementPage();
+    }
+  });
+};
+
+const observer = new IntersectionObserver(onEntry, {
+  rootMargin: '150px',
+});
+observer.observe(refs.guardScroll);
 
 // Load more with button
 
@@ -52,23 +81,6 @@ function appendImages(images) {
 //     loadMoreBtn.show();
 //     loadMoreBtn.enable();
 //     imagesApi.incrementPage();
+//      window.scrollTo(0,document.body.scrollHeight)
 //   });
 // }
-
-// Load more with infinie scroll
-
-const onEntry = entries => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting && imagesApi.query != '') {
-      imagesApi.fetchImages().then(({ hits }) => {
-        appendImages(hits);
-        imagesApi.incrementPage();
-      });
-    }
-  });
-};
-
-const observer = new IntersectionObserver(onEntry, {
-  rootMargin: '150px',
-});
-observer.observe(refs.guardScroll);
